@@ -4,7 +4,8 @@ Electron-based GUI to create, save, and run reusable shell scripts.
 
 ## Features
 - Create & manage multiple scripts (persisted under Electron userData folder)
-- Choose shell: PowerShell, CMD (Windows) or bash/sh (cross-platform options shown)
+- Choose shell: PowerShell, CMD, or bash/sh (bash supported on Windows via WSL / Git Bash / PATH bash)
+- Auto-detects bash environments on Windows in priority: WSL > Git Bash > PATH
 - Streamed real-time output with separation of stdout/stderr
 - Start/Stop script execution
 - Secure preload bridge (contextIsolation enabled)
@@ -49,6 +50,25 @@ Each file schema:
 - Scheduling / cron-like runner
 - Tags & search
 - Execution history with logs
+
+## Bash on Windows Support
+If you select bash/sh while running on Windows, the app tries to find an environment:
+1. WSL (`wsl.exe bash -lc '<script>'`)
+2. Git Bash (common install paths)
+3. Any `bash.exe` present in PATH
+
+If none are found you will see an error advising you to install WSL or Git for Windows.
+
+Install options:
+- WSL (recommended):
+  - PowerShell (admin): `wsl --install` then restart. Your default distro provides bash.
+- Git Bash:
+  - Download from https://git-scm.com and ensure "Git Bash" is installed (default). This provides `bash.exe` under Program Files.
+
+Quirks:
+- WSL path translation: the script runs in a Linux environment; Windows drives are under `/mnt/c`.
+- Git Bash runs in a MinGW environment and can execute most POSIX shell constructs but not all Linux utilities unless provided.
+- Basic single-quote escaping is applied; very complex quoting may require wrapping logic in a separate script file.
 
 ## License
 ISC

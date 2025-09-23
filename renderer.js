@@ -61,8 +61,18 @@ async function loadScript(id) {
 }
 
 async function saveCurrent() {
-  const record = await api.save({ id: currentId, name: els.name.value, shell: els.shell.value, content: els.content.value });
-  currentId = record.id;
+  const result = await api.save({ id: currentId, name: els.name.value, shell: els.shell.value, content: els.content.value });
+  if (result && result.error) {
+    if (result.code === 'NAME_CONFLICT') {
+      els.name.classList.add('error');
+      showTempMessage('Name already exists', 'error');
+      return;
+    }
+    showTempMessage(result.error || 'Save failed', 'error');
+    return;
+  }
+  els.name.classList.remove('error');
+  currentId = result.id;
   await refreshList(currentId);
   updateButtons();
 }
@@ -102,6 +112,40 @@ async function runCurrent(){
 
 function stopCurrent(){
   if(!currentId) return; api.stop(currentId); }
+
+// --- Duplicate name live feedback ---
+let nameCheckTimeout;
+els.name.addEventListener('input', async () => {
+  clearTimeout(nameCheckTimeout);
+  nameCheckTimeout = setTimeout(async () => {
+    const list = await api.list();
+    const val = els.name.value.trim();
+    const duplicate = list.find(s => s.name.toLowerCase() === val.toLowerCase() && s.id !== currentId);
+    if (duplicate) {
+      els.name.classList.add('error');
+    } else {
+      els.name.classList.remove('error');
+    }
+  }, 250);
+});
+
+// --- Lightweight transient message display ---
+let msgDiv;
+function ensureMsgDiv(){
+  if(!msgDiv){
+    msgDiv = document.createElement('div');
+    msgDiv.id = 'toastMsg';
+    document.body.appendChild(msgDiv);
+  }
+  return msgDiv;
+}
+function showTempMessage(text, type='info', ms=2500){
+  const d = ensureMsgDiv();
+  d.textContent = text;
+  d.className = type;
+  d.style.opacity = '1';
+  setTimeout(()=>{ d.style.opacity='0'; }, ms);
+}
 
 // Event wiring
 els.newBtn.addEventListener('click', () => { clearEditor(); });

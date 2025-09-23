@@ -37,9 +37,32 @@ function saveScript(script) {
   const now = Date.now();
   if (!script.id) script.id = generateId();
   const existing = fs.existsSync(path.join(getScriptsDir(), `${script.id}.json`)) ? loadScript(script.id) : null;
+  // --- Unique Name Handling ---
+  let desiredName = (script.name || '').trim() || 'Untitled';
+  const all = listScripts();
+  const conflict = (name) => all.find(s => s.name.toLowerCase() === name.toLowerCase() && s.id !== script.id);
+
+  if (!existing) {
+    // New script: auto-suffix (name (2), name (3), ...)
+    if (conflict(desiredName)) {
+      const base = desiredName.replace(/ \(\d+\)$/,'');
+      let n = 2;
+      let candidate = `${base} (${n})`;
+      while (conflict(candidate)) { n++; candidate = `${base} (${n})`; }
+      desiredName = candidate;
+    }
+  } else {
+    // Update existing: if user tries to rename to an existing other script name -> error
+    if (conflict(desiredName)) {
+      const err = new Error('A script with that name already exists.');
+      err.code = 'NAME_CONFLICT';
+      throw err;
+    }
+  }
+
   const record = {
     id: script.id,
-    name: script.name?.trim() || 'Untitled',
+    name: desiredName,
     shell: script.shell || defaultShell(),
     content: script.content || '',
     createdAt: existing?.createdAt || now,
@@ -63,6 +86,41 @@ function defaultShell() {
   return 'bash';
 }
 
+// ------- Windows Bash Support Detection -------
+// Allow running bash/sh scripts on Windows via (priority): WSL -> Git Bash -> bash in PATH
+function findBashOnWindows() {
+  if (process.platform !== 'win32') return null;
+  try {
+    // Check WSL presence
+    const systemRoot = process.env.SYSTEMROOT || 'C://Windows';
+    const wslPath = path.join(systemRoot, 'System32', 'wsl.exe');
+    if (fs.existsSync(wslPath)) {
+      return { type: 'wsl', command: 'wsl.exe', argsPrefix: ['bash', '-lc'] };
+    }
+  } catch (_) { /* ignore */ }
+
+  // Git Bash common locations
+  const gitCandidates = [
+    'C://Program Files//Git//bin//bash.exe',
+    'C://Program Files (x86)//Git//bin//bash.exe'
+  ];
+  for (const p of gitCandidates) {
+    if (fs.existsSync(p)) {
+      return { type: 'git-bash', command: p, argsPrefix: ['-lc'] };
+    }
+  }
+
+  // Search PATH
+  const pathParts = (process.env.PATH || '').split(';');
+  for (const part of pathParts) {
+    const candidate = path.join(part, 'bash.exe');
+    if (fs.existsSync(candidate)) {
+      return { type: 'path-bash', command: candidate, argsPrefix: ['-lc'] };
+    }
+  }
+  return null;
+}
+
 // ------- Execution Layer -------
 // Runs scripts in a child process using chosen shell.
 // Emits streaming output via IPC (channel: scripts:run:output)
@@ -75,7 +133,17 @@ function runScript(event, id) {
   const shell = script.shell || defaultShell();
 
   if (process.platform === 'win32') {
-    if (shell === 'cmd') {
+    if (shell === 'bash' || shell === 'sh') {
+      const bashInfo = findBashOnWindows();
+      if (!bashInfo) {
+        event.sender.send('scripts:run:output', { id, type: 'error', message: 'No Bash environment detected. Install WSL (https://learn.microsoft.com/windows/wsl/install) or Git for Windows to enable bash scripts.' });
+        return;
+      }
+      command = bashInfo.command;
+      // Basic escaping of single quotes for -lc '<script>' form
+      const escaped = execContent.replace(/'/g, "'\\''");
+      args = [...bashInfo.argsPrefix, `'${escaped}'`];
+    } else if (shell === 'cmd') {
       command = 'cmd.exe';
       args = ['/d', '/c', execContent];
     } else { // powershell
@@ -120,7 +188,13 @@ function stopScript(id) {
 // ------- IPC Handlers -------
 ipcMain.handle('scripts:list', () => listScripts());
 ipcMain.handle('scripts:get', (e, id) => loadScript(id));
-ipcMain.handle('scripts:save', (e, payload) => saveScript(payload));
+ipcMain.handle('scripts:save', (e, payload) => {
+  try {
+    return saveScript(payload);
+  } catch (err) {
+    return { error: err.message, code: err.code || 'SAVE_FAILED' };
+  }
+});
 ipcMain.handle('scripts:delete', (e, id) => { deleteScript(id); return { ok: true }; });
 ipcMain.handle('scripts:run', (e, id) => { runScript(e, id); return { started: true }; });
 ipcMain.handle('scripts:stop', (e, id) => ({ stopped: stopScript(id) }));
