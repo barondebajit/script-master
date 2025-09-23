@@ -1,0 +1,16 @@
+{
+  "name": "script-master",
+  "version": "1.0.0",
+  "description": "GUI Custom Script Running Framework",
+  "license": "ISC",
+  "author": "barondebajit",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "electron": "^38.1.2"
+  }
+}

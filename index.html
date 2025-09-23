@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Master</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="renderer.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Script Master</h1>
+        <button id="newScriptBtn" title="Create New Script">➕ New</button>
+    </header>
+    <main class="layout">
+        <aside class="sidebar">
+            <h2>Scripts</h2>
+            <ul id="scriptList"></ul>
+        </aside>
+        <section class="editor-section">
+            <div class="editor-toolbar">
+                <input id="scriptName" placeholder="Script name" />
+                <select id="scriptShell" title="Shell">
+                    <option value="powershell">PowerShell</option>
+                    <option value="cmd">CMD</option>
+                    <option value="bash">bash</option>
+                    <option value="sh">sh</option>
+                </select>
+                <button id="saveScriptBtn">💾 Save</button>
+                <button id="runScriptBtn">▶ Run</button>
+                <button id="stopScriptBtn" disabled>⏹ Stop</button>
+                <button id="deleteScriptBtn" class="danger">🗑 Delete</button>
+            </div>
+            <textarea id="scriptContent" placeholder="Write your shell script here..." spellcheck="false"></textarea>
+            <div class="output-panel">
+                <div class="output-header">
+                    <span>Output</span>
+                    <button id="clearOutputBtn">Clear</button>
+                </div>
+                <pre id="output" class="output"></pre>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

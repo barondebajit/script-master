@@ -1,0 +1,29 @@
+* { box-sizing: border-box; }
+body { margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#181a1b; color:#e8e6e3; }
+header { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; background:#242729; border-bottom:1px solid #333; }
+header h1 { font-size:1.25rem; margin:0; }
+button { background:#2e6df6; color:#fff; border:1px solid #2a60d4; border-radius:4px; padding:0.4rem 0.75rem; cursor:pointer; font-size:0.9rem; }
+button:hover { background:#3978ff; }
+button:disabled { opacity:0.5; cursor:not-allowed; }
+button.danger { background:#b73434; border-color:#9b1f1f; }
+button.danger:hover { background:#d34747; }
+
+.layout { display:flex; height:calc(100vh - 56px); }
+.sidebar { width:260px; border-right:1px solid #333; padding:0.75rem; overflow:auto; }
+.sidebar h2 { margin:0 0 0.5rem; font-size:1rem; font-weight:600; }
+#scriptList { list-style:none; margin:0; padding:0; }
+#scriptList li { padding:0.5rem 0.45rem; border:1px solid #333; background:#202324; margin-bottom:0.5rem; border-radius:4px; cursor:pointer; font-size:0.8rem; line-height:1.2; }
+#scriptList li.active { border-color:#2e6df6; box-shadow:0 0 0 1px #2e6df6 inset; }
+#scriptList li:hover { background:#262a2b; }
+
+.editor-section { flex:1; display:flex; flex-direction:column; }
+.editor-toolbar { display:flex; gap:0.5rem; padding:0.5rem; border-bottom:1px solid #333; background:#202324; }
+.editor-toolbar input { flex:1; padding:0.4rem; background:#181a1b; color:#fff; border:1px solid #444; border-radius:4px; }
+.editor-toolbar select { background:#181a1b; color:#fff; border:1px solid #444; border-radius:4px; padding:0.35rem; }
+#scriptContent { flex:1; width:100%; resize:none; background:#111; color:#d2d2d2; border:none; padding:0.75rem; font-family: Consolas, monospace; font-size:0.9rem; line-height:1.4; border-bottom:1px solid #333; }
+.output-panel { height:200px; display:flex; flex-direction:column; }
+.output-header { display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.6rem; background:#202324; border-bottom:1px solid #333; }
+.output { flex:1; margin:0; padding:0.75rem; overflow:auto; background:#0c0d0e; color:#eee; font-size:0.75rem; }
+.output .stderr { color:#ff8686; }
+
+@media (max-width: 900px) { .layout { flex-direction:column; } .sidebar { width:100%; height:180px; } .editor-section { height:calc(100vh - 56px - 180px); } }
